@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Send Message</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+        }
+        .container {
+            position: relative;
+            max-width: 350px;
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .cont {
+            position: relative;
+            max-width: 388px;
+            width: 100%;
+            background: linear-gradient(375deg,#000, #0006b9, #a1f3eb);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn-outline-success {
+            width: 100%;
+        }
+        .btn-secondary{
+            width: 100%;
+        }
+        .textarea {
+            width: 100%;
+            height: 180px;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 10px 15px;
+            resize: none;
+            outline: none;
+            border: 1px solid #aaa;
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .message {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .message.sent {
+            background-color: #DCF8C6;
+        }
+        .message.received {
+            background-color: #F7F7F7;
+        }
+        .message-content {
+            margin-bottom: 5px;
+        }
+        .dark-mode {
+            background-color: #000000;
+            color: #040000;
+        }
+        .dark-mode .message {
+            background-color: #d3d3d3;
+        }
+        .dark-mode .message.sent {
+            background-color: #1E712D;
+        }
+        .dark-mode .message.received {
+            background-color: #444;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Lấy giá trị chế độ sáng/tối từ localStorage (nếu có)
+            var darkMode = localStorage.getItem('darkMode');
+
+            // Kiểm tra giá trị và cập nhật giao diện
+            if (darkMode === 'enabled') {
+                $('body').addClass('dark-mode');
+            } else {
+                $('body').removeClass('dark-mode');
+            }
+
+            // Bắt sự kiện chuyển đổi chế độ sáng/tối
+            $('#dark-mode-toggle').on('click', function() {
+                // Kiểm tra trạng thái hiện tại của chế độ sáng/tối
+                if ($('body').hasClass('dark-mode')) {
+                    $('body').removeClass('dark-mode');
+                    localStorage.setItem('darkMode', 'disabled');
+                } else {
+                    $('body').addClass('dark-mode');
+                    localStorage.setItem('darkMode', 'enabled');
+                }
+            });
+
+            function updateMessages() {
+                $.ajax({
+                    url: '/get_messages',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        var messages = response.messages;
+                        var messagesList = $('#messages-list');
+                        messagesList.empty();
+
+                        for (var i = 0; i < messages.length; i++) {
+                            var message = messages[i];
+                            var messageItem = $('<li class="message"></li>').text(message);
+                            messagesList.append(messageItem);
+                        }
+                    }
+                });
+            }
+
+            $('form').on('submit', function(event) {
+                event.preventDefault();
+                var messageInput = $('.message-input');
+                var message = messageInput.val();
+
+                $.ajax({
+                    url: '/send_message',
+                    method: 'POST',
+                    data: {message: message},
+                    success: function(response) {
+                        updateMessages(); // Update the messages after sending a new message
+                        messageInput.val(''); // Clear the input field
+                    }
+                });
+            });
+
+            updateMessages(); // Initial update
+
+            // Update messages every 5 seconds
+            setInterval(function() {
+                updateMessages();
+            }, 5000);
+        });
+    </script>
+</head>
+<body>
+    <div class="cont">
+        <div class="container">
+            <div class="message-container">
+                <h1>Send Telegram</h1>
+            
+                <ul id="messages-list" class="chat-box">
+                    {% for message in sent_messages %}
+                        <li class="message">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+
+                <form>
+                    <div class="form-group">
+                        <textarea class="form-control message-input" name="message" rows="4" cols="50" placeholder="Enter text"></textarea>
+                    </div>
+                    <div class="form-group">
+                    <button type="submit" class="btn btn-outline-success">Send</button>
+                    </div>
+                    
+                </form>
+                <button id="dark-mode-toggle" class="btn btn-secondary">Toggle Dark Mode</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
